@@ -46,7 +46,7 @@
     //-> Browse
     v-list.py-2(v-else-if='currentMode === `browse`', dense, :class='color', :dark='dark')
       template
-        v-treeview(
+        v-treeview.page-tree(
           v-model="tree"
           :items="allBrowseTree"
           item-key="id"
@@ -57,8 +57,7 @@
           activatable
           dense
           color
-          hoverable
-          open-on-click)
+          hoverable)
           template(v-slot:prepend="{item}")
             v-icon(v-if='item.isFolder') mdi-folder
             v-icon(v-else) mdi-text-box
@@ -123,7 +122,7 @@ export default {
       sessionStorage.setItem('activeTree', JSON.stringify(obj))
       if (obj.length > 0) {
         const activeItem = this.allBrowseList.find(item => item.id === obj[0])
-        if (!activeItem.isFolder && obj[0] !== this.activeTree[0]) {
+        if (obj[0] !== this.activeTree[0]) {
           sessionStorage.setItem('openTree', JSON.stringify(this.openTree))
           // this.$router.push({ path: `/` + item.locale + `/` + item.path })
           window.location.assign(`/` + activeItem.locale + `/` + activeItem.path)
@@ -270,6 +269,8 @@ export default {
       this.$store.commit(`loadingStop`, 'browse-load')
     },
     goHome () {
+      sessionStorage.setItem('activeTree', JSON.stringify([]))
+      sessionStorage.setItem('openTree', JSON.stringify([]))
       window.location.assign(siteLangs.length > 0 ? `/${this.locale}/home` : '/')
     }
   },
@@ -289,3 +290,13 @@ export default {
   }
 }
 </script>
+
+<style lang='scss'>
+
+.page-tree {
+  .v-treeview-node__content {
+    cursor: pointer;
+  }
+}
+
+</style>
