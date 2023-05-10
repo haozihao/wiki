@@ -20,7 +20,7 @@
           v-show='searchLoading'
           )
       .d-flex
-        v-flex.grey(xs5, :class='$vuetify.theme.dark ? `darken-4` : `lighten-3`')
+        v-flex.grey(:class='$vuetify.theme.dark ? `darken-4` : `lighten-3`')
           v-toolbar(color='grey darken-3', dark, dense, flat)
             .body-2 {{$t('common:pageSelector.virtualFolders')}}
             v-spacer
@@ -33,7 +33,6 @@
                 :active.sync='currentNode'
                 :open.sync='openNodes'
                 :items='tree'
-                :load-children='fetchFolders'
                 dense
                 expand-icon='mdi-menu-down-outline'
                 item-id='path'
@@ -42,34 +41,10 @@
                 hoverable
                 )
                 template(slot='prepend', slot-scope='{ item, open, leaf }')
-                  v-icon mdi-{{ open ? 'folder-open' : 'folder' }}
-        v-flex(xs7)
-          v-toolbar(color='blue darken-2', dark, dense, flat)
-            .body-2 {{$t('common:pageSelector.pages')}}
-            //- v-spacer
-            //- v-btn(icon, tile, disabled): v-icon mdi-content-save-move-outline
-            //- v-btn(icon, tile, disabled): v-icon mdi-trash-can-outline
-          div(v-if='currentPages.length > 0', style='height:400px;')
-            vue-scroll(:ops='scrollStyle')
-              v-list.py-0(dense)
-                v-list-item-group(
-                  v-model='currentPage'
-                  color='primary'
-                  )
-                  template(v-for='(page, idx) of currentPages')
-                    v-list-item(:key='`page-` + page.id', :value='page')
-                      v-list-item-icon: v-icon mdi-text-box
-                      v-list-item-title {{page.title}}
-                    v-divider(v-if='idx < pages.length - 1')
-          v-alert.animated.fadeIn(
-            v-else
-            text
-            color='orange'
-            prominent
-            icon='mdi-alert'
-            )
-            .body-2 {{$t('common:pageSelector.folderEmptyWarning')}}
+                  v-icon(v-if='item.isFolder') mdi-{{ open ? 'folder-open' : 'folder' }}
+                  v-icon(v-else) mdi-text-box
       v-card-actions.grey.pa-2(:class='$vuetify.theme.dark ? `darken-2` : `lighten-1`', v-if='!mustExist')
+        span {{'页面位置'}}
         v-select(
           solo
           dark
@@ -148,6 +123,7 @@ export default {
         {
           id: 0,
           title: '/ (root)',
+          isFolder: 1,
           children: []
         }
       ],
@@ -260,6 +236,9 @@ export default {
       })
     }
   },
+  mounted () {
+    this.fetchAllBrowseItems()
+  },
   methods: {
     close() {
       this.isShown = false
@@ -273,6 +252,41 @@ export default {
       if (exit !== false) {
         this.close()
       }
+    },
+    async fetchAllBrowseItems() {
+      this.$store.commit(`loadingStart`, 'browse-load')
+      const resp = await this.$apollo.query({
+        query: gql`
+          query ($locale: String!) {
+            pages {
+              allTree(locale: $locale) {
+                id
+                path
+                title
+                isFolder
+                pageId
+                parent
+                locale
+              }
+            }
+          }
+        `,
+        fetchPolicy: 'cache-first',
+        variables: {
+          locale: this.locale
+        }
+      })
+      const list = _.get(resp, 'data.pages.allTree', [])
+      let array = []
+      list.forEach(item => { // 遍历对象数组
+        item.children = list.filter(info => info.parent === item.id)
+        if (item.parent === 0) {
+          array.push(item) // 将一层节点放入新数组中
+        }
+      })
+      this.tree[0].children = array
+      this.all = list
+      this.$store.commit(`loadingStop`, 'browse-load')
     },
     async fetchFolders (item) {
       this.searchLoading = true

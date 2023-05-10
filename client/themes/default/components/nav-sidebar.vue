@@ -58,8 +58,8 @@
           dense
           color
           hoverable)
-          template(v-slot:prepend="{item}")
-            v-icon(v-if='item.isFolder') mdi-folder
+          template(v-slot:prepend="{item,open}")
+            v-icon(v-if='item.isFolder') mdi-{{ open ? 'folder-open' : 'folder' }}
             v-icon(v-else) mdi-text-box
 </template>
 
