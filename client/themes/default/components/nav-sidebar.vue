@@ -45,26 +45,23 @@
         v-subheader.pl-4(v-else-if='item.k === `header`') {{ item.l }}
     //-> Browse
     v-list.py-2(v-else-if='currentMode === `browse`', dense, :class='color', :dark='dark')
-      template(v-if='currentParent.id > 0')
-        v-list-item(v-for='(item, idx) of parents', :key='`parent-` + item.id', @click='fetchBrowseItems(item)', style='min-height: 30px;')
-          v-list-item-avatar(size='18', :style='`padding-left: ` + (idx * 8) + `px; width: auto; margin: 0 5px 0 0;`')
-            v-icon(small) mdi-folder-open
-          v-list-item-title {{ item.title }}
-        v-divider.mt-2
-        v-list-item.mt-2(v-if='currentParent.pageId > 0', :href='`/` + currentParent.locale + `/` + currentParent.path', :key='`directorypage-` + currentParent.id', :input-value='path === currentParent.path')
-          v-list-item-avatar(size='24')
-            v-icon mdi-text-box
-          v-list-item-title {{ currentParent.title }}
-        v-subheader.pl-4 {{$t('common:sidebar.currentDirectory')}}
-      template(v-for='item of currentItems')
-        v-list-item(v-if='item.isFolder', :key='`childfolder-` + item.id', @click='fetchBrowseItems(item)')
-          v-list-item-avatar(size='24')
-            v-icon mdi-folder
-          v-list-item-title {{ item.title }}
-        v-list-item(v-else, :href='`/` + item.locale + `/` + item.path', :key='`childpage-` + item.id', :input-value='path === item.path')
-          v-list-item-avatar(size='24')
-            v-icon mdi-text-box
-          v-list-item-title {{ item.title }}
+      template
+        v-treeview(
+          v-model="tree"
+          :items="allBrowseTree"
+          item-key="id"
+          item-text="title"
+          :open.sync="openTree"
+          :active="activeTree"
+          @update:active="updateActive"
+          activatable
+          dense
+          color
+          hoverable
+          open-on-click)
+          template(v-slot:prepend="{item}")
+            v-icon(v-if='item.isFolder') mdi-folder
+            v-icon(v-else) mdi-text-box
 </template>
 
 <script>
@@ -95,6 +92,11 @@ export default {
   },
   data() {
     return {
+      tree: [],
+      openTree: [],
+      activeTree: [],
+      allBrowseList: [],
+      allBrowseTree: [],
       currentMode: 'custom',
       currentItems: [],
       currentParent: {
@@ -116,6 +118,56 @@ export default {
       if (mode === `browse` && this.loadedCache.length < 1) {
         this.loadFromCurrentPath()
       }
+    },
+    updateActive(obj) {
+      sessionStorage.setItem('activeTree', JSON.stringify(obj))
+      if (obj.length > 0) {
+        const activeItem = this.allBrowseList.find(item => item.id === obj[0])
+        if (!activeItem.isFolder && obj[0] !== this.activeTree[0]) {
+          sessionStorage.setItem('openTree', JSON.stringify(this.openTree))
+          // this.$router.push({ path: `/` + item.locale + `/` + item.path })
+          window.location.assign(`/` + activeItem.locale + `/` + activeItem.path)
+        }
+      }
+    },
+    async fetchAllBrowseItems() {
+      this.$store.commit(`loadingStart`, 'browse-load')
+      const resp = await this.$apollo.query({
+        query: gql`
+          query ($locale: String!) {
+            pages {
+              allTree(locale: $locale) {
+                id
+                path
+                title
+                isFolder
+                pageId
+                parent
+                locale
+              }
+            }
+          }
+        `,
+        fetchPolicy: 'cache-first',
+        variables: {
+          locale: this.locale
+        }
+      })
+      const list = _.get(resp, 'data.pages.allTree', [])
+      let array = []
+      list.forEach(item => { // 遍历对象数组
+        item.children = list.filter(info => info.parent === item.id)
+        if (item.parent === 0) {
+          array.push(item) // 将一层节点放入新数组中
+        }
+      })
+      this.allBrowseList = list
+      this.allBrowseTree = array
+      const oldActiveTree = JSON.parse(sessionStorage.getItem('activeTree'))
+      const oldOpenTree = JSON.parse(sessionStorage.getItem('openTree'))
+      this.activeTree = oldActiveTree || []
+      this.openTree = oldOpenTree || []
+      this.$store.commit(`loadingStop`, 'browse-load')
     },
     async fetchBrowseItems (item) {
       this.$store.commit(`loadingStart`, 'browse-load')
@@ -233,6 +285,7 @@ export default {
     if (this.currentMode === 'browse') {
       this.loadFromCurrentPath()
     }
+    this.fetchAllBrowseItems()
   }
 }
 </script>

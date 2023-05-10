@@ -65,6 +65,10 @@ type PageQuery {
     includeAncestors: Boolean
   ): [PageTreeItem] @auth(requires: ["manage:system", "read:pages"])
 
+  allTree(
+    locale: String!
+  ): [PageTreeItem] @auth(requires: ["manage:system", "read:pages"])
+
   links(
     locale: String!
   ): [PageLinkItem] @auth(requires: ["manage:system", "read:pages"])
