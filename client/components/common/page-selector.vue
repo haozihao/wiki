@@ -44,7 +44,7 @@
                   v-icon(v-if='item.isFolder') mdi-{{ open ? 'folder-open' : 'folder' }}
                   v-icon(v-else) mdi-text-box
       v-card-actions.grey.pa-2(:class='$vuetify.theme.dark ? `darken-2` : `lighten-1`', v-if='!mustExist')
-        span {{'页面位置'}}
+        span(style='flex: 0 0 120px;') {{'页面位置：'}}
         v-select(
           solo
           dark
@@ -63,8 +63,32 @@
           prefix='/'
           v-model='currentPath'
           flat
+          disabled
           clearable
           style='border-radius: 0 4px 4px 0;'
+        )
+      v-card-actions.grey.pa-2(:class='$vuetify.theme.dark ? `darken-2` : `lighten-1`', v-if='!mustExist')
+        span(style='flex: 0 0 120px;') {{'新页面标题：'}}
+        v-text-field(
+          ref='pathIpt'
+          solo
+          hide-details
+          placeholder="请输入新页面标题"
+          v-model='currentTitle'
+          flat
+          clearable
+          style='border-radius: 4px 4px;'
+        )
+      v-card-actions.grey.pa-2(:class='$vuetify.theme.dark ? `darken-2` : `lighten-1`', v-if='!mustExist && mode === `create` && newFlag ')
+        span(style='flex: 0 0 120px;') {{'编辑器选择：'}}
+        v-select(
+          solo
+          flat
+          hide-details
+          single-line
+          :items='editorList'
+          style='border-radius: 4px;'
+          v-model='currentEditor'
         )
       v-card-chin
         v-spacer
@@ -107,6 +131,10 @@ export default {
     mustExist: {
       type: Boolean,
       default: false
+    },
+    newFlag: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -116,6 +144,9 @@ export default {
       currentLocale: siteConfig.lang,
       currentFolderPath: '',
       currentPath: 'new-page',
+      currentTitle: 'new-page',
+      currentEditor: 'markdown',
+      editorList: ['markdown', 'ckeditor', 'asciidoc', 'code'],
       currentPage: null,
       currentNode: [0],
       openNodes: [0],
@@ -162,6 +193,9 @@ export default {
       if (!this.currentPath) {
         return false
       }
+      if (!this.currentTitle) {
+        return false
+      }
       if (this.mustExist && !this.currentPage) {
         return false
       }
@@ -183,7 +217,11 @@ export default {
   watch: {
     isShown (newValue, oldValue) {
       if (newValue && !oldValue) {
+        this.fetchAllBrowseItems()
         this.currentPath = this.path
+        if (this.mode === 'move') {
+          this.currentTitle = this.currentPath.split('/').pop()
+        }
         this.currentLocale = this.locale
         _.delay(() => {
           this.$refs.pathIpt.focus()
@@ -211,8 +249,15 @@ export default {
           })
         }
 
-        this.currentPath = _.compact([_.get(current, 'path', ''), _.last(this.currentPath.split('/'))]).join('/')
+        this.currentPath = _.compact([_.get(current, 'path', ''), this.currentTitle]).join('/')
       }
+    },
+    currentTitle (newValue, oldValue) {
+      const list = this.currentPath.split('/')
+      if (oldValue) {
+        list.pop()
+      }
+      this.currentPath = _.compact([list.join('/'), newValue]).join('/')
     },
     currentPage (newValue, oldValue) {
       if (!_.isEmpty(newValue)) {
@@ -237,13 +282,15 @@ export default {
     }
   },
   mounted () {
-    this.fetchAllBrowseItems()
+    // this.fetchAllBrowseItems()
   },
   methods: {
     close() {
       this.isShown = false
     },
     open() {
+      sessionStorage.setItem('currentEditor', `editor${_.startCase(this.currentEditor)}`)
+      sessionStorage.setItem('currentTitle', this.currentTitle)
       const exit = this.openHandler({
         locale: this.currentLocale,
         path: this.currentPath,
@@ -285,6 +332,7 @@ export default {
         }
       })
       this.tree[0].children = array
+      this.openNodes = [0]
       this.all = list
       this.$store.commit(`loadingStop`, 'browse-load')
     },

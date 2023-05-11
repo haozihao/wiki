@@ -47,7 +47,7 @@
     v-main
       component(:is='currentEditor', :save='save')
       editor-modal-properties(v-model='dialogProps')
-      editor-modal-editorselect(v-model='dialogEditorSelector')
+      //editor-modal-editorselect(v-model='dialogEditorSelector')
       editor-modal-unsaved(v-model='dialogUnsaved', @discard='exitGo')
       component(:is='activeModal')
 
@@ -201,13 +201,13 @@ export default {
     }
   },
   watch: {
-    currentEditor(newValue, oldValue) {
-      if (newValue !== '' && this.mode === 'create') {
-        _.delay(() => {
-          this.dialogProps = true
-        }, 500)
-      }
-    },
+    // currentEditor(newValue, oldValue) {
+    //   if (newValue !== '' && this.mode === 'create') {
+    //     _.delay(() => {
+    //       this.dialogProps = true
+    //     }, 500)
+    //   }
+    // },
     currentStyling(newValue) {
       this.injectCustomCss(newValue)
     }
@@ -236,6 +236,11 @@ export default {
     }
   },
   mounted() {
+    if (sessionStorage.getItem('currentTitle') && sessionStorage.getItem('currentEditor')) {
+      this.$store.set('page/title', sessionStorage.getItem('currentTitle'))
+      this.$store.set('editor/editor', sessionStorage.getItem('currentEditor'))
+      sessionStorage.clear()
+    }
     this.$store.set('editor/mode', this.initMode || 'create')
 
     this.initContentParsed = this.initContent ? Base64.decode(this.initContent) : ''
