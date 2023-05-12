@@ -21,12 +21,7 @@
           )
       .d-flex
         v-flex.grey(:class='$vuetify.theme.dark ? `darken-4` : `lighten-3`')
-          v-toolbar(color='grey darken-3', dark, dense, flat)
-            .body-2 {{$t('common:pageSelector.virtualFolders')}}
-            v-spacer
-            v-btn(icon, tile, href='https://docs.requarks.io/guide/pages#folders', target='_blank')
-              v-icon mdi-help-box
-          div(style='height:400px;')
+          div(style='height:320px;')
             vue-scroll(:ops='scrollStyle')
               v-treeview(
                 :key='`pageTree-` + treeViewCacheId'
@@ -45,17 +40,6 @@
                   v-icon(v-else) mdi-text-box
       v-card-actions.grey.pa-2(:class='$vuetify.theme.dark ? `darken-2` : `lighten-1`', v-if='!mustExist')
         span(style='flex: 0 0 120px;') {{'页面位置：'}}
-        v-select(
-          solo
-          dark
-          flat
-          background-color='grey darken-3-d2'
-          hide-details
-          single-line
-          :items='namespaces'
-          style='flex: 0 0 100px; border-radius: 4px 0 0 4px;'
-          v-model='currentLocale'
-          )
         v-text-field(
           ref='pathIpt'
           solo
@@ -63,9 +47,8 @@
           prefix='/'
           v-model='currentPath'
           flat
-          disabled
-          clearable
-          style='border-radius: 0 4px 4px 0;'
+          readonly
+          style='border-radius: 4px;'
         )
       v-card-actions.grey.pa-2(:class='$vuetify.theme.dark ? `darken-2` : `lighten-1`', v-if='!mustExist')
         span(style='flex: 0 0 120px;') {{'新页面标题：'}}
@@ -87,6 +70,8 @@
           hide-details
           single-line
           :items='editorList'
+          item-value="type"
+          item-text="text"
           style='border-radius: 4px;'
           v-model='currentEditor'
         )
@@ -145,8 +130,8 @@ export default {
       currentFolderPath: '',
       currentPath: 'new-page',
       currentTitle: 'new-page',
-      currentEditor: 'markdown',
-      editorList: ['markdown', 'ckeditor', 'asciidoc', 'code'],
+      currentEditor: 'ckeditor',
+      editorList: [{text: '富文本编辑器', type: 'ckeditor'}, {text: 'markdown编辑器', type: 'markdown'}],
       currentPage: null,
       currentNode: [0],
       openNodes: [0],

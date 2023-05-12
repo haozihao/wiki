@@ -119,9 +119,14 @@ export default {
       }
     },
     updateActive(obj) {
-      sessionStorage.setItem('activeTree', JSON.stringify(obj))
-      if (obj.length > 0) {
+      if (obj.length === 0) {
+        this.activeTree = JSON.parse(sessionStorage.getItem('activeTree'))
+      } else if (obj.length > 0) {
+        sessionStorage.setItem('activeTree', JSON.stringify(obj))
         const activeItem = this.allBrowseList.find(item => item.id === obj[0])
+        if (activeItem.isFolder) {
+          this.openTree.push(activeItem.id)
+        }
         if (obj[0] !== this.activeTree[0]) {
           sessionStorage.setItem('openTree', JSON.stringify(this.openTree))
           // this.$router.push({ path: `/` + item.locale + `/` + item.path })

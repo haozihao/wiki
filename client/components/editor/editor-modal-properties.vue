@@ -58,12 +58,13 @@
                 v-flex(xs12, md10)
                   v-text-field(
                     outlined
+                    readonly
                     :label='$t(`editor:props.path`)'
-                    append-icon='mdi-folder-search'
+                    append-outer-icon='mdi-folder-search'
                     v-model='path'
                     :hint='$t(`editor:props.pathHint`)'
                     persistent-hint
-                    @click:append='showPathSelector'
+                    @click:append-outer='showPathSelector'
                     :rules='[rules.required, rules.path]'
                     )
           v-divider
