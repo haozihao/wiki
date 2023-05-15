@@ -298,6 +298,7 @@ type PageTreeItem {
   parent: Int
   pageId: Int
   locale: String!
+  ancestors: [Int]
 }
 
 type PageLinkItem {

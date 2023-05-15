@@ -99,7 +99,7 @@ export default {
     },
     title: {
       type: String,
-      default: 'Untitled Page'
+      default: 'new-page'
     },
     description: {
       type: String,
@@ -131,7 +131,7 @@ export default {
     },
     initEditor: {
       type: String,
-      default: null
+      default: 'ckeditor'
     },
     initMode: {
       type: String,

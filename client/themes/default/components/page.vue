@@ -649,8 +649,6 @@ export default {
   },
   methods: {
     goHome () {
-      sessionStorage.setItem('activeTree', JSON.stringify([]))
-      sessionStorage.setItem('openTree', JSON.stringify([]))
       window.location.assign('/')
     },
     toggleNavigation () {

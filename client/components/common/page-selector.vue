@@ -47,20 +47,22 @@
           prefix='/'
           v-model='currentPath'
           flat
-          readonly
+          disabled
           style='border-radius: 4px;'
         )
       v-card-actions.grey.pa-2(:class='$vuetify.theme.dark ? `darken-2` : `lighten-1`', v-if='!mustExist')
         span(style='flex: 0 0 120px;') {{'新页面标题：'}}
         v-text-field(
-          ref='pathIpt'
+          ref='pathIpt2'
           solo
-          hide-details
+          outlined
+          hide-details="auto"
           placeholder="请输入新页面标题"
           v-model='currentTitle'
           flat
           clearable
           style='border-radius: 4px 4px;'
+          :rules="[titleRules.required,titleRules.currentTitle]"
         )
       v-card-actions.grey.pa-2(:class='$vuetify.theme.dark ? `darken-2` : `lighten-1`', v-if='!mustExist && mode === `create` && newFlag ')
         span(style='flex: 0 0 120px;') {{'编辑器选择：'}}
@@ -90,6 +92,7 @@ import gql from 'graphql-tag'
 const localeSegmentRegex = /^[A-Z]{2}(-[A-Z]{2})?$/i
 
 /* global siteLangs, siteConfig */
+const titlePattern = /^[^\/\#\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s]*$/
 
 export default {
   props: {
@@ -163,6 +166,12 @@ export default {
             background: '#64B5F6'
           }
         }
+      },
+      titleRules: {
+        required: value => !!value || '标题必须输入',
+        currentTitle: value => {
+          return titlePattern.test(value) || '请确保它不包含特殊字符'
+        }
       }
     }
   },
@@ -182,6 +191,9 @@ export default {
         return false
       }
       if (this.mustExist && !this.currentPage) {
+        return false
+      }
+      if (!titlePattern.test(this.currentTitle)) {
         return false
       }
       const firstSection = _.head(this.currentPath.split('/'))
@@ -211,6 +223,8 @@ export default {
         _.delay(() => {
           this.$refs.pathIpt.focus()
         })
+      } else {
+        this.currentTitle = 'new-page'
       }
     },
     currentNode (newValue, oldValue) {
@@ -238,11 +252,13 @@ export default {
       }
     },
     currentTitle (newValue, oldValue) {
-      const list = this.currentPath.split('/')
-      if (oldValue) {
-        list.pop()
+      if (titlePattern.test(newValue) && this.currentPath !== 'home') {
+        const list = this.currentPath.split('/')
+        if (oldValue) {
+          list.pop()
+        }
+        this.currentPath = _.compact([list.join('/'), newValue]).join('/')
       }
-      this.currentPath = _.compact([list.join('/'), newValue]).join('/')
     },
     currentPage (newValue, oldValue) {
       if (!_.isEmpty(newValue)) {
@@ -279,6 +295,7 @@ export default {
       const exit = this.openHandler({
         locale: this.currentLocale,
         path: this.currentPath,
+        title: this.currentTitle,
         id: (this.mustExist && this.currentPage) ? this.currentPage.pageId : 0
       })
       if (exit !== false) {

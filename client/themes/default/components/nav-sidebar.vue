@@ -119,19 +119,12 @@ export default {
       }
     },
     updateActive(obj) {
-      if (obj.length === 0) {
-        this.activeTree = JSON.parse(sessionStorage.getItem('activeTree'))
-      } else if (obj.length > 0) {
-        sessionStorage.setItem('activeTree', JSON.stringify(obj))
-        const activeItem = this.allBrowseList.find(item => item.id === obj[0])
-        if (activeItem.isFolder) {
-          this.openTree.push(activeItem.id)
-        }
-        if (obj[0] !== this.activeTree[0]) {
-          sessionStorage.setItem('openTree', JSON.stringify(this.openTree))
-          // this.$router.push({ path: `/` + item.locale + `/` + item.path })
-          window.location.assign(`/` + activeItem.locale + `/` + activeItem.path)
-        }
+      const activeItem = this.allBrowseList.find(item => item.id === obj[0])
+      if (activeItem.isFolder) {
+        this.openTree.push(activeItem.id)
+      }
+      if (activeItem.pageId && obj[0] !== this.activeTree[0]) {
+        window.location.assign(`/` + activeItem.locale + `/` + activeItem.path)
       }
     },
     async fetchAllBrowseItems() {
@@ -148,6 +141,7 @@ export default {
                 pageId
                 parent
                 locale
+                ancestors
               }
             }
           }
@@ -167,8 +161,13 @@ export default {
       })
       this.allBrowseList = list
       this.allBrowseTree = array
-      const oldActiveTree = JSON.parse(sessionStorage.getItem('activeTree'))
-      const oldOpenTree = JSON.parse(sessionStorage.getItem('openTree'))
+
+      const activeItem = this.allBrowseList.find(item => item.path === this.path)
+      const oldActiveTree = [activeItem.id]
+      const oldOpenTree = activeItem.ancestors
+      if (activeItem.isFolder) {
+        oldOpenTree.push(activeItem.id)
+      }
       this.activeTree = oldActiveTree || []
       this.openTree = oldOpenTree || []
       this.$store.commit(`loadingStop`, 'browse-load')
@@ -274,8 +273,6 @@ export default {
       this.$store.commit(`loadingStop`, 'browse-load')
     },
     goHome () {
-      sessionStorage.setItem('activeTree', JSON.stringify([]))
-      sessionStorage.setItem('openTree', JSON.stringify([]))
       window.location.assign(siteLangs.length > 0 ? `/${this.locale}/home` : '/')
     }
   },

@@ -13,6 +13,7 @@
         outlined
         dark
         @click.native='close'
+        :disabled='!isValidPath'
         )
         v-icon(left) mdi-check
         span {{ $t('common:actions.ok') }}
@@ -29,6 +30,8 @@
             v-text-field(
               ref='iptTitle'
               outlined
+              hide-details="auto"
+              :rules="[titleRules.required,titleRules.currentTitle]"
               :label='$t(`editor:props.title`)'
               counter='255'
               v-model='title'
@@ -257,6 +260,7 @@ import 'codemirror/mode/css/css.js'
 
 /* global siteLangs, siteConfig */
 const filenamePattern = /^(?![\#\/\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s])(?!.*[\#\/\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s]$)[^\#\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s]*$/
+const titlePattern = /^[^\/\#\.\$\^\=\*\;\:\&\?\(\)\[\]\{\}\"\'\>\<\,\@\!\%\`\~\s]*$/
 
 export default {
   props: {
@@ -281,6 +285,12 @@ export default {
           path: value => {
             return filenamePattern.test(value) || 'Invalid path. Please ensure it does not contain special characters, or begin/end in a slash or hashtag string.'
           }
+      },
+      titleRules: {
+        required: value => !!value || '标题必须输入',
+        currentTitle: value => {
+          return titlePattern.test(value) || '请确保它不包含特殊字符，或以斜杠或标签字符串开头/结尾'
+        }
       }
     }
   },
@@ -304,6 +314,9 @@ export default {
     hasStylePermission: get('page/effectivePermissions@pages.style'),
     pageSelectorMode () {
       return (this.mode === 'create') ? 'create' : 'move'
+    },
+    isValidPath () {
+      return titlePattern.test(this.title)
     }
   },
   watch: {
@@ -342,6 +355,15 @@ export default {
           }, 100)
         })
       }
+    },
+    title (newValue, oldValue) {
+      if (titlePattern.test(newValue) && this.path !== 'home') {
+        const list = this.path.split('/')
+        if (oldValue) {
+          list.pop()
+        }
+        this.path = _.compact([list.join('/'), newValue]).join('/')
+      }
     }
   },
   methods: {
@@ -354,9 +376,10 @@ export default {
     showPathSelector() {
       this.pageSelectorShown = true
     },
-    setPath({ path, locale }) {
+    setPath({ path, locale, title }) {
       this.locale = locale
       this.path = path
+      this.title = title
     },
     loadEditor(ref, mode) {
       this.cm = CodeMirror.fromTextArea(ref, {
