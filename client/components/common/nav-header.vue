@@ -399,7 +399,9 @@ export default {
     pageNew () {
       this.newPageModal = true
     },
-    pageNewCreate ({ path, locale }) {
+    pageNewCreate ({ path, locale, title, editor }) {
+      sessionStorage.setItem('currentEditor', `editor${_.startCase(editor)}`)
+      sessionStorage.setItem('currentTitle', title)
       window.location.assign(`/e/${locale}/${path}`)
     },
     pageView () {

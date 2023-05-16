@@ -48,7 +48,7 @@
       component(:is='currentEditor', :save='save')
       editor-modal-properties(v-model='dialogProps')
       // editor-modal-editorselect(v-model='dialogEditorSelector')
-      editor-modal-unsaved(v-model='dialogUnsaved', @discard='exitGo')
+      editor-modal-unsaved(v-model='dialogUnsaved', @discard='unSave')
       component(:is='activeModal')
 
     loader(v-model='dialogProgress', :title='$t(`editor:save.processing`)', :subtitle='$t(`editor:save.pleaseWait`)')
@@ -131,7 +131,7 @@ export default {
     },
     initEditor: {
       type: String,
-      default: 'ckeditor'
+      default: null
     },
     initMode: {
       type: String,
@@ -236,9 +236,11 @@ export default {
     }
   },
   mounted() {
-    if (sessionStorage.getItem('currentTitle') && sessionStorage.getItem('currentEditor')) {
+    if (sessionStorage.getItem('currentTitle')) {
       this.$store.set('page/title', sessionStorage.getItem('currentTitle'))
-      this.$store.set('editor/editor', sessionStorage.getItem('currentEditor'))
+      if (sessionStorage.getItem('currentEditor')) {
+        this.$store.set('editor/editor', sessionStorage.getItem('currentEditor'))
+      }
       sessionStorage.clear()
     }
     this.$store.set('editor/mode', this.initMode || 'create')
@@ -246,6 +248,9 @@ export default {
     this.initContentParsed = this.initContent ? Base64.decode(this.initContent) : ''
     this.$store.set('editor/content', this.initContentParsed)
     if (this.mode === 'create' && !this.initEditor) {
+      if (!this.currentEditor) {
+        this.currentEditor = `editor${_.startCase(this.initEditor || 'markdown')}`
+      }
       _.delay(() => {
         this.dialogEditorSelector = true
       }, 500)
@@ -531,6 +536,11 @@ export default {
           window.location.assign(`/${this.$store.get('page/locale')}/${this.$store.get('page/path')}`)
         }
       }, 500)
+    },
+    unSave () {
+      // window.history.go(-1)
+      const path = window.location.href.split(this.$store.get('page/locale')).pop()
+      window.location.assign(`/${this.$store.get('page/locale')}${path}`)
     },
     setCurrentSavedState () {
       this.savedState = {

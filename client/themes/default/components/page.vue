@@ -41,7 +41,7 @@
             divider='/'
             )
             template(slot='item', slot-scope='props')
-              v-icon(v-if='props.item.path === "/"', small, @click='goHome') mdi-home
+              v-icon(v-if='props.item.path === "/"', small) mdi-home
               v-btn.ma-0(v-else, :href='props.item.path', small, text) {{props.item.name}}
           template(v-if='!isPublished')
             v-spacer
@@ -195,30 +195,30 @@
             //-       )
             //-       .caption.grey--text 5 votes
 
-            v-card.page-shortcuts-card(flat)
-              v-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-d3` : `grey lighten-3`', flat, dense)
-                v-spacer
-                //- v-tooltip(bottom)
-                //-   template(v-slot:activator='{ on }')
-                //-     v-btn(icon, tile, v-on='on', :aria-label='$t(`common:page.bookmark`)'): v-icon(color='grey') mdi-bookmark
-                //-   span {{$t('common:page.bookmark')}}
-                v-menu(offset-y, bottom, min-width='300')
-                  template(v-slot:activator='{ on: menu }')
-                    v-tooltip(bottom)
-                      template(v-slot:activator='{ on: tooltip }')
-                        v-btn(icon, tile, v-on='{ ...menu, ...tooltip }', :aria-label='$t(`common:page.share`)'): v-icon(color='grey') mdi-share-variant
-                      span {{$t('common:page.share')}}
-                  social-sharing(
-                    :url='pageUrl'
-                    :title='title'
-                    :description='description'
-                  )
-                v-tooltip(bottom)
-                  template(v-slot:activator='{ on }')
-                    v-btn(icon, tile, v-on='on', @click='print', :aria-label='$t(`common:page.printFormat`)')
-                      v-icon(:color='printView ? `primary` : `grey`') mdi-printer
-                  span {{$t('common:page.printFormat')}}
-                v-spacer
+            //v-card.page-shortcuts-card(flat)
+            //  v-toolbar(:color='$vuetify.theme.dark ? `grey darken-4-d3` : `grey lighten-3`', flat, dense)
+            //    v-spacer
+            //    //- v-tooltip(bottom)
+            //    //-   template(v-slot:activator='{ on }')
+            //    //-     v-btn(icon, tile, v-on='on', :aria-label='$t(`common:page.bookmark`)'): v-icon(color='grey') mdi-bookmark
+            //    //-   span {{$t('common:page.bookmark')}}
+            //    v-menu(offset-y, bottom, min-width='300')
+            //      template(v-slot:activator='{ on: menu }')
+            //        v-tooltip(bottom)
+            //          template(v-slot:activator='{ on: tooltip }')
+            //            v-btn(icon, tile, v-on='{ ...menu, ...tooltip }', :aria-label='$t(`common:page.share`)'): v-icon(color='grey') mdi-share-variant
+            //          span {{$t('common:page.share')}}
+            //      social-sharing(
+            //        :url='pageUrl'
+            //        :title='title'
+            //        :description='description'
+            //      )
+            //    v-tooltip(bottom)
+            //      template(v-slot:activator='{ on }')
+            //        v-btn(icon, tile, v-on='on', @click='print', :aria-label='$t(`common:page.printFormat`)')
+            //          v-icon(:color='printView ? `primary` : `grey`') mdi-printer
+            //      span {{$t('common:page.printFormat')}}
+            //    v-spacer
 
           v-flex.page-col-content(
             xs12

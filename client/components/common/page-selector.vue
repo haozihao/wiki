@@ -102,7 +102,7 @@ export default {
     },
     path: {
       type: String,
-      default: 'new-page'
+      default: null
     },
     locale: {
       type: String,
@@ -131,8 +131,8 @@ export default {
       searchLoading: false,
       currentLocale: siteConfig.lang,
       currentFolderPath: '',
-      currentPath: 'new-page',
-      currentTitle: 'new-page',
+      currentDirectory: '',
+      currentTitle: '',
       currentEditor: 'ckeditor',
       editorList: [{text: '富文本编辑器', type: 'ckeditor'}, {text: 'markdown编辑器', type: 'markdown'}],
       currentPage: null,
@@ -180,9 +180,12 @@ export default {
       get() { return this.value },
       set(val) { this.$emit('input', val) }
     },
-    currentPages () {
-      return _.sortBy(_.filter(this.pages, ['parent', _.head(this.currentNode) || 0]), ['title', 'path'])
+    currentPath () {
+      return (this.currentDirectory ? this.currentDirectory + '/' : '') + (this.currentTitle || '')
     },
+    // currentPages () {
+    //   return _.sortBy(_.filter(this.pages, ['parent', _.head(this.currentNode) || 0]), ['title', 'path'])
+    // },
     isValidPath () {
       if (!this.currentPath) {
         return false
@@ -215,16 +218,16 @@ export default {
     isShown (newValue, oldValue) {
       if (newValue && !oldValue) {
         this.fetchAllBrowseItems()
-        this.currentPath = this.path
+        let splitList = this.path.split('/')
+        let title = splitList.pop()
+        this.currentDirectory = splitList.join('/')
         if (this.mode === 'move') {
-          this.currentTitle = this.currentPath.split('/').pop()
+          this.currentTitle = title
         }
         this.currentLocale = this.locale
         _.delay(() => {
-          this.$refs.pathIpt.focus()
+          this.$refs.pathIpt2.focus()
         })
-      } else {
-        this.currentTitle = 'new-page'
       }
     },
     currentNode (newValue, oldValue) {
@@ -247,17 +250,7 @@ export default {
             this.openNodes.push(newValue[0])
           })
         }
-
-        this.currentPath = _.compact([_.get(current, 'path', ''), this.currentTitle]).join('/')
-      }
-    },
-    currentTitle (newValue, oldValue) {
-      if (titlePattern.test(newValue) && this.currentPath !== 'home') {
-        const list = this.currentPath.split('/')
-        if (oldValue) {
-          list.pop()
-        }
-        this.currentPath = _.compact([list.join('/'), newValue]).join('/')
+        this.currentDirectory = _.get(current, 'path', '')
       }
     },
     currentPage (newValue, oldValue) {
@@ -290,12 +283,11 @@ export default {
       this.isShown = false
     },
     open() {
-      sessionStorage.setItem('currentEditor', `editor${_.startCase(this.currentEditor)}`)
-      sessionStorage.setItem('currentTitle', this.currentTitle)
       const exit = this.openHandler({
         locale: this.currentLocale,
         path: this.currentPath,
         title: this.currentTitle,
+        editor: this.currentEditor,
         id: (this.mustExist && this.currentPage) ? this.currentPage.pageId : 0
       })
       if (exit !== false) {
